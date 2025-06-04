@@ -5,7 +5,9 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.JToggleButton;
+import javax.swing.border.Border;
 
 import java.awt.FlowLayout;
 import java.util.Map.Entry;
@@ -93,16 +95,25 @@ public class PasswordManagerGUI {
             String password;
             while(true) {
                 JPasswordField passwordField = new JPasswordField(20);
-                JPanel passwordPanel = new JPanel();
-                passwordPanel.add(passwordField);
+                JPasswordField passwordField2 = new JPasswordField(20);
 
+                JPanel passwordPanel = new JPanel(new java.awt.GridLayout(2, 2));
+                passwordPanel.add(new javax.swing.JLabel("Enter password:"));
+                passwordPanel.add(passwordField);
+                passwordPanel.add(new javax.swing.JLabel("Re-enter password:"));
+                passwordPanel.add(passwordField2);
                 int result = JOptionPane.showConfirmDialog(frame, passwordPanel, "Enter password for key: " + key, JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-                if (result == JOptionPane.CANCEL_OPTION) {
-                    return; // User cancelled the input
+                if (result != JOptionPane.OK_OPTION) {
+                    return;
                 }
                 password = new String(passwordField.getPassword());
+                String password2 = new String(passwordField2.getPassword());
                 if(password.trim().isEmpty()) {
                     JOptionPane.showMessageDialog(frame, "Password cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+                if(!password.equals(password2)) {
+                    JOptionPane.showMessageDialog(frame, "Passwords do not match. Please try again.", "Error", JOptionPane.ERROR_MESSAGE);
+                    continue;
                 } else if(!passwordStore.isPasswordStrong(password)){
                     JOptionPane.showMessageDialog(frame, "Password is not strong enough. It must be at least 8 characters long, contain uppercase and lowercase letters, numbers, and special characters.", "Error", JOptionPane.ERROR_MESSAGE);
                 } else {
@@ -114,21 +125,26 @@ public class PasswordManagerGUI {
         });
 
         /*
-         * Adds an action listener to the "View Passwords" button.
-         * 
-         * When the button is clicked:
-         * - First, it checks if the password store is empty using isEmpty().
-         *   - If empty, it shows an informational dialog to the user.
-         * 
-         * - If there are stored passwords:
-         *   - It creates a StringBuilder to efficiently build a long string that will contain all key-password pairs.
-         *   - It uses an enhanced for loop to iterate through each entry in the password map.
-         *   - For each entry, it appends the key (e.g., website or service) and the password to the StringBuilder.
-         *     - StringBuilder is used here because it's more efficient than string concatenation inside a loop.
-         *     - Unlike Strings, StringBuilder doesn't create a new object with each change — it modifies the existing one.
-         * 
-         * - Finally, it converts the StringBuilder to a String using toString() and displays it in a message dialog.
-         */
+        * Adds an action listener to the "View Passwords" button.
+        *
+        * When clicked:
+        * - It checks if any passwords exist in the store. If not, it notifies the user and exits.
+        * - Otherwise, it opens a custom panel with:
+        *   - A search bar (JTextField) at the top for filtering passwords by their key (e.g., website name).
+        *   - A toggle button (JToggleButton) to show or hide decrypted passwords.
+        *   - A scrollable text area (JTextArea inside JScrollPane) displaying the filtered password list.
+        *
+        * Features:
+        * - The password list updates dynamically as the user types into the search bar.
+        *   - This is achieved using a DocumentListener attached to the JTextField.
+        * - The toggle button allows switching between masked ("********") and decrypted password views.
+        *
+        * Technical Notes:
+        * - The updatePasswords Runnable handles the filtering and view logic.
+        * - Entries are filtered using a case-insensitive match of the key against the search field.
+        * - The decrypted password is only shown if the toggle button is selected.
+        * - Uses layout managers (BorderLayout) for neat organization of UI elements.
+        */
 
         viewButton.addActionListener(e -> {
             // Code to view all passwords
@@ -137,6 +153,10 @@ public class PasswordManagerGUI {
                 return;
             }
 
+            JTextField searchField = new JTextField(20);
+            JPanel topPanel = new JPanel(new BorderLayout());
+            topPanel.add(new javax.swing.JLabel("Search: "), BorderLayout.WEST);
+            topPanel.add(searchField, BorderLayout.CENTER);
             JTextArea passwordArea = new JTextArea(15, 30);
             passwordArea.setEditable(false);
             JScrollPane scrollPane = new JScrollPane(passwordArea);
@@ -144,17 +164,39 @@ public class PasswordManagerGUI {
             JToggleButton toggleButton = new JToggleButton("Show Passwords");
 
             JPanel panel = new JPanel(new BorderLayout());
+            panel.add(topPanel, BorderLayout.NORTH);
             panel.add(scrollPane, BorderLayout.CENTER);
             panel.add(toggleButton, BorderLayout.SOUTH);
 
             Runnable updatePasswords = () -> {
-                StringBuilder allPasswords = new StringBuilder("Stored Passwords:\n");
+                StringBuilder filteredPasswords = new StringBuilder("Stored Passwords:\n");
+                String searchText = searchField.getText().trim().toLowerCase();
                 for (Entry<String, String> entry : passwordStore.getAllEntries().entrySet()) {
-                    String password = toggleButton.isSelected() ? passwordStore.decrypt(entry.getValue()) : "********";
-                    allPasswords.append(entry.getKey()).append(": ").append(password).append("\n");
+                    String key = entry.getKey().toLowerCase();
+                    if(key.contains(searchText)){
+                        String password = toggleButton.isSelected() ? passwordStore.decrypt(entry.getValue()) : "********";
+                        filteredPasswords.append(entry.getKey()).append(": ").append(password).append("\n");
+                    }
                 }
-                passwordArea.setText(allPasswords.toString());
+                passwordArea.setText(filteredPasswords.toString());
             };
+
+            searchField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+                @Override
+                public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                    updatePasswords.run();
+                }
+
+                @Override
+                public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                    updatePasswords.run();
+                }
+
+                @Override
+                public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                    updatePasswords.run();
+                }
+            });
 
             updatePasswords.run();
 
