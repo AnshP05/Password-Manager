@@ -22,10 +22,19 @@ public class PasswordStore {
     }
 
     public void addEntry(String key, String password) {
-        if(password != null && !password.isEmpty()) {
+        if(password != null && !password.isEmpty() && isPasswordStrong(password)) {
             String encryptedPassword = encrypt(password);
             passwordMap.put(key, encryptedPassword); 
         } 
+    }
+
+    public boolean isPasswordStrong(String password) {
+        if(password.length() < 8) return false;
+        if(!password.matches(".*[A-Z].*")) return false; // At least one uppercase letter
+        if(!password.matches(".*[a-z].*")) return false; // At least one lowercase letter
+        if(!password.matches(".*\\d.*")) return false;
+        if(!password.matches(".*[!@#$%^&*()].*")) return false; // At least one special character
+        return true;
     }
 
     public Map<String, String> getAllEntries() {

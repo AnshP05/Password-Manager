@@ -2,6 +2,10 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JToggleButton;
+
 import java.awt.FlowLayout;
 import java.util.Map.Entry;
 import java.awt.BorderLayout;
@@ -79,16 +83,26 @@ public class PasswordManagerGUI {
 
         addButton.addActionListener(e -> {
             // Code to add a password entry
+
             String key = JOptionPane.showInputDialog(frame, "Enter key for password:");
             if (key == null || key.trim().isEmpty()) {
                 JOptionPane.showMessageDialog(frame, "Key cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            String password = JOptionPane.showInputDialog(frame, "Enter password for " + key + ":");
-            if (password == null || password.trim().isEmpty()) {
-                JOptionPane.showMessageDialog(frame, "Password cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
+            String password;
+            while(true) {
+                password = JOptionPane.showInputDialog(frame, "Enter password for " + key + ":");
+                if(password == null){
+                    return;
+                } else if(password.trim().isEmpty()) {
+                    JOptionPane.showMessageDialog(frame, "Password cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
+                } else if(!passwordStore.isPasswordStrong(password)){
+                    JOptionPane.showMessageDialog(frame, "Password is not strong enough. It must be at least 8 characters long, contain uppercase and lowercase letters, numbers, and special characters.", "Error", JOptionPane.ERROR_MESSAGE);
+                
+                } else {
+                    break;
+                }
+            } 
             passwordStore.addEntry(key, password);
             JOptionPane.showMessageDialog(frame, "Password added for key: " + key, "Info", JOptionPane.INFORMATION_MESSAGE);
         });
@@ -116,12 +130,34 @@ public class PasswordManagerGUI {
                 JOptionPane.showMessageDialog(frame, "No passwords stored yet.", "Info", JOptionPane.INFORMATION_MESSAGE);
                 return;
             }
-            StringBuilder allPasswords = new StringBuilder("Stored Passwords:\n");
-            for (Entry<String, String> entry : passwordStore.getAllEntries().entrySet()) {
-                String decryptedPassword = passwordStore.decrypt(entry.getValue());
-                allPasswords.append(entry.getKey()).append(": ").append(decryptedPassword).append("\n");
-            }
-            JOptionPane.showMessageDialog(frame, allPasswords.toString(), "View Passwords", JOptionPane.INFORMATION_MESSAGE);
+
+            JTextArea passwordArea = new JTextArea(15, 30);
+            passwordArea.setEditable(false);
+            JScrollPane scrollPane = new JScrollPane(passwordArea);
+
+            JToggleButton toggleButton = new JToggleButton("Show Passwords");
+
+            JPanel panel = new JPanel(new BorderLayout());
+            panel.add(scrollPane, BorderLayout.CENTER);
+            panel.add(toggleButton, BorderLayout.SOUTH);
+
+            Runnable updatePasswords = () -> {
+                StringBuilder allPasswords = new StringBuilder("Stored Passwords:\n");
+                for (Entry<String, String> entry : passwordStore.getAllEntries().entrySet()) {
+                    String password = toggleButton.isSelected() ? passwordStore.decrypt(entry.getValue()) : "********";
+                    allPasswords.append(entry.getKey()).append(": ").append(password).append("\n");
+                }
+                passwordArea.setText(allPasswords.toString());
+            };
+
+            updatePasswords.run();
+
+            toggleButton.addActionListener(e2 -> {
+                toggleButton.setText(toggleButton.isSelected() ? "Hide Passwords" : "Show Passwords");
+                updatePasswords.run();
+            });
+
+            JOptionPane.showMessageDialog(frame, panel, "View Passwords", JOptionPane.INFORMATION_MESSAGE);
         });
 
         /*
