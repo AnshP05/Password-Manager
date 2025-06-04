@@ -9,7 +9,9 @@ import javax.swing.JFileChooser;
 
 public class PasswordManagerGUI {
 
-    private PasswordStore passwordStore; // Instance of the PasswordStore class
+    // Instance variable to hold the PasswordStore object
+    private PasswordStore passwordStore; 
+
     // Constructor for the PasswordManagerGUI class
     public PasswordManagerGUI() {
         // Initialize the GUI components and set up the application
@@ -19,12 +21,24 @@ public class PasswordManagerGUI {
     // Method to initialize the GUI components
     private void initialize() {
     
-        // Code to set up the GUI goes here
+        /*
+        * Creating the main frame for the password manager application
+        * Sets the default close operation to exiting when the close button is pressed
+        * Sets the size of the frame to a normal size for the user to use without too much clutter
+        * Sets the frame's layout to BorderLayout which has 5 regions(North, South, West, East, Center)
+        */ 
         JFrame frame = new JFrame("Password Manager");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(600, 400);
         frame.setLayout(new BorderLayout());
 
+        /* 
+        * Creating a panel for buttons at the top of the frame
+        * Setting the layout of the panel to FlowLayout(arranges the components in a row much like text in a paragraph) with left alignment
+        * Creating and adding buttons to the button panel for various actions like adding, viewing, deleting, and exporting passwords
+        * Adding the button panel to the frame at the top (North) region
+        * Setting the frame to be visible so that the user can interact with it
+        */
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
         JButton addButton = new JButton("Add Password");
@@ -40,6 +54,27 @@ public class PasswordManagerGUI {
 
         // Create an instance of PasswordStore to manage passwords
         passwordStore = new PasswordStore();
+
+        /*
+        * Adds an action listener to the "Add Password" button.
+        * 
+        * When clicked:
+        * - Prompts the user to enter a key (e.g., a website or service name) using JOptionPane.
+        *   - If the key is null (user canceled) or empty (user left it blank), it shows an error dialog and exits the listener early.
+        * 
+        * - Then prompts the user to enter a password for the given key.
+        *   - Again, it checks if the password is null or empty and shows an error dialog if so.
+        * 
+        * - If both values are valid:
+        *   - It calls the addEntry() method of the PasswordStore to store the key-password pair.
+        * 
+        * - Finally, it shows a confirmation message indicating that the password was added successfully.
+        * 
+        * Note:
+        * - This step ensures basic input validation.
+        * - JOptionPane is used for a simple and interactive way to get user input and display feedback.
+        */
+
         addButton.addActionListener(e -> {
             // Code to add a password entry
             String key = JOptionPane.showInputDialog(frame, "Enter key for password:");
@@ -53,8 +88,25 @@ public class PasswordManagerGUI {
                 return;
             }
             passwordStore.addEntry(key, password);
-            System.out.println("Password added for key: " + key);
+            JOptionPane.showMessageDialog(frame, "Password added for key: " + key, "Info", JOptionPane.INFORMATION_MESSAGE);
         });
+
+        /*
+         * Adds an action listener to the "View Passwords" button.
+         * 
+         * When the button is clicked:
+         * - First, it checks if the password store is empty using isEmpty().
+         *   - If empty, it shows an informational dialog to the user.
+         * 
+         * - If there are stored passwords:
+         *   - It creates a StringBuilder to efficiently build a long string that will contain all key-password pairs.
+         *   - It uses an enhanced for loop to iterate through each entry in the password map.
+         *   - For each entry, it appends the key (e.g., website or service) and the password to the StringBuilder.
+         *     - StringBuilder is used here because it's more efficient than string concatenation inside a loop.
+         *     - Unlike Strings, StringBuilder doesn't create a new object with each change — it modifies the existing one.
+         * 
+         * - Finally, it converts the StringBuilder to a String using toString() and displays it in a message dialog.
+         */
 
         viewButton.addActionListener(e -> {
             // Code to view all passwords
@@ -69,6 +121,21 @@ public class PasswordManagerGUI {
             JOptionPane.showMessageDialog(frame, allPasswords.toString(), "View Passwords", JOptionPane.INFORMATION_MESSAGE);
         });
 
+        /*
+         * Adds an action listener to the "Delete Password" button.
+         * 
+         * When clicked:
+         * - Prompts the user to enter the key of the password they want to delete using JOptionPane.
+         *   - If the key is null (user canceled) or empty (user left it blank), it shows an error dialog and exits the listener early.
+         * 
+         * - It checks if the password store contains the specified key using containsKey().
+         *   - If not found, it shows an error dialog indicating that no password exists for that key.
+         * 
+         * - If the key is valid and exists in the store:
+         *   - It calls the deleteEntry() method of PasswordStore to remove the entry.
+         * 
+         * - Finally, it shows a confirmation message indicating that the password was deleted successfully.
+         */
         deleteButton.addActionListener(e -> {
             // Code to delete a password entry
             String key = JOptionPane.showInputDialog(frame, "Enter key of password to delete:");
@@ -81,9 +148,21 @@ public class PasswordManagerGUI {
                 return;
             }
             passwordStore.deleteEntry(key);
-            System.out.println("Password deleted for key: " + key);
+            JOptionPane.showMessageDialog(frame, "Passwrord deleted for: " + key, "Info", JOptionPane.INFORMATION_MESSAGE);
         });
 
+        /*
+         * Adds an action listener to the "Export Passwords" button.
+         * 
+         * When clicked:
+         * - It creates a JFileChooser to allow the user to select a file path for exporting passwords.
+         * - If the user approves the selection (i.e., clicks "Save"):
+         *   - It retrieves the selected file path using getSelectedFile().getAbsolutePath().
+         *   - It calls the exportToFile() method of PasswordStore to save all passwords to the specified file.
+         *   - Finally, it shows a success message indicating that passwords were exported successfully.
+         * 
+         * - If the user cancels the operation, it shows a message indicating that export was cancelled.
+         */
         exportButton.addActionListener(e -> {
             JFileChooser fileChooser = new JFileChooser();
             int userSelection = fileChooser.showSaveDialog(frame);
