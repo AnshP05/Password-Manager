@@ -2,6 +2,7 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JToggleButton;
@@ -91,14 +92,19 @@ public class PasswordManagerGUI {
             }
             String password;
             while(true) {
-                password = JOptionPane.showInputDialog(frame, "Enter password for " + key + ":");
-                if(password == null){
-                    return;
-                } else if(password.trim().isEmpty()) {
+                JPasswordField passwordField = new JPasswordField(20);
+                JPanel passwordPanel = new JPanel();
+                passwordPanel.add(passwordField);
+
+                int result = JOptionPane.showConfirmDialog(frame, passwordPanel, "Enter password for key: " + key, JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+                if (result == JOptionPane.CANCEL_OPTION) {
+                    return; // User cancelled the input
+                }
+                password = new String(passwordField.getPassword());
+                if(password.trim().isEmpty()) {
                     JOptionPane.showMessageDialog(frame, "Password cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
                 } else if(!passwordStore.isPasswordStrong(password)){
                     JOptionPane.showMessageDialog(frame, "Password is not strong enough. It must be at least 8 characters long, contain uppercase and lowercase letters, numbers, and special characters.", "Error", JOptionPane.ERROR_MESSAGE);
-                
                 } else {
                     break;
                 }
