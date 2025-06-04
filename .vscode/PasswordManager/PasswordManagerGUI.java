@@ -57,12 +57,28 @@ public class PasswordManagerGUI {
             // Code to view all passwords
             if(passwordStore.getAllEntries().isEmpty()){
                 JOptionPane.showMessageDialog(frame, "No passwords stored yet.", "Info", JOptionPane.INFORMATION_MESSAGE);
+                return;
             }
             StringBuilder allPasswords = new StringBuilder("Stored Passwords:\n");
             for (Entry<String, String> entry : passwordStore.getAllEntries().entrySet()) {
                 allPasswords.append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
             }
             JOptionPane.showMessageDialog(frame, allPasswords.toString(), "View Passwords", JOptionPane.INFORMATION_MESSAGE);
+        });
+
+        deleteButton.addActionListener(e -> {
+            // Code to delete a password entry
+            String key = JOptionPane.showInputDialog(frame, "Enter key of password to delete:");
+            if (key == null || key.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(frame, "Key cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            if(!passwordStore.getAllEntries().containsKey(key)) {
+                JOptionPane.showMessageDialog(frame, "No password found for the given key.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            passwordStore.deleteEntry(key);
+            System.out.println("Password deleted for key: " + key);
         });
     }
 

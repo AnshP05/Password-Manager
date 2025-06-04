@@ -18,4 +18,11 @@ public class PasswordStore {
         // Return all entries in the password store
         return passwordMap;
     }
+
+    public void deleteEntry(String key){
+        if(passwordMap.containsKey(key)) {
+            // Remove the entry with the specified key
+            passwordMap.remove(key);
+        } 
+    }
 }
