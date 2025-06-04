@@ -5,6 +5,7 @@ import javax.swing.JPanel;
 import java.awt.FlowLayout;
 import java.util.Map.Entry;
 import java.awt.BorderLayout;
+import javax.swing.JFileChooser;
 
 public class PasswordManagerGUI {
 
@@ -29,9 +30,11 @@ public class PasswordManagerGUI {
         JButton addButton = new JButton("Add Password");
         JButton viewButton = new JButton("View Passwords");
         JButton deleteButton = new JButton("Delete Password");
+        JButton exportButton = new JButton("Export Passwords");
         buttonPanel.add(addButton);
         buttonPanel.add(viewButton);
         buttonPanel.add(deleteButton);
+        buttonPanel.add(exportButton);
         frame.add(buttonPanel, BorderLayout.NORTH);
         frame.setVisible(true);
 
@@ -79,6 +82,18 @@ public class PasswordManagerGUI {
             }
             passwordStore.deleteEntry(key);
             System.out.println("Password deleted for key: " + key);
+        });
+
+        exportButton.addActionListener(e -> {
+            JFileChooser fileChooser = new JFileChooser();
+            int userSelection = fileChooser.showSaveDialog(frame);
+            if (userSelection == JFileChooser.APPROVE_OPTION) {
+                String filePath = fileChooser.getSelectedFile().getAbsolutePath();
+                passwordStore.exportToFile(filePath);
+                JOptionPane.showMessageDialog(frame, "Passwords exported successfully to " + filePath, "Export Success", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(frame, "Export cancelled.", "Export Cancelled", JOptionPane.INFORMATION_MESSAGE);
+            }
         });
     }
 

@@ -1,5 +1,11 @@
 import java.util.Map;
+
+import javax.swing.JOptionPane;
+
 import java.util.HashMap;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.BufferedWriter;
 public class PasswordStore {
     //intance variable
     private Map<String, String> passwordMap;
@@ -24,5 +30,18 @@ public class PasswordStore {
             // Remove the entry with the specified key
             passwordMap.remove(key);
         } 
+    }
+
+    public void exportToFile(String filePath) {
+        // Code to export the password map to a file
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+            for(Map.Entry<String, String> entry : passwordMap.entrySet()) {
+                String line = entry.getKey() + ":" + entry.getValue();
+                writer.write(line);
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(null, "Error exporting passwords: " + e.getMessage(), "Export Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 }
