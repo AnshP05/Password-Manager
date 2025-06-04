@@ -13,4 +13,9 @@ public class PasswordStore {
         // Add a new entry to the password store
         passwordMap.put(key, password);
     }
+
+    public Map<String, String> getAllEntries() {
+        // Return all entries in the password store
+        return passwordMap;
+    }
 }
