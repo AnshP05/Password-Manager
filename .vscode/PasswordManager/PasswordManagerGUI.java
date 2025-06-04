@@ -35,7 +35,7 @@ public class PasswordManagerGUI {
         /* 
         * Creating a panel for buttons at the top of the frame
         * Setting the layout of the panel to FlowLayout(arranges the components in a row much like text in a paragraph) with left alignment
-        * Creating and adding buttons to the button panel for various actions like adding, viewing, deleting, and exporting passwords
+        * Creating and adding buttons to the button panel for various actions like adding, viewing, deleting, and exporting/importing passwords
         * Adding the button panel to the frame at the top (North) region
         * Setting the frame to be visible so that the user can interact with it
         */
@@ -45,10 +45,12 @@ public class PasswordManagerGUI {
         JButton viewButton = new JButton("View Passwords");
         JButton deleteButton = new JButton("Delete Password");
         JButton exportButton = new JButton("Export Passwords");
+        JButton importButton = new JButton("Import Passwords");
         buttonPanel.add(addButton);
         buttonPanel.add(viewButton);
         buttonPanel.add(deleteButton);
         buttonPanel.add(exportButton);
+        buttonPanel.add(importButton);
         frame.add(buttonPanel, BorderLayout.NORTH);
         frame.setVisible(true);
 
@@ -148,7 +150,7 @@ public class PasswordManagerGUI {
                 return;
             }
             passwordStore.deleteEntry(key);
-            JOptionPane.showMessageDialog(frame, "Passwrord deleted for: " + key, "Info", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(frame, "Password deleted for: " + key, "Info", JOptionPane.INFORMATION_MESSAGE);
         });
 
         /*
@@ -172,6 +174,30 @@ public class PasswordManagerGUI {
                 JOptionPane.showMessageDialog(frame, "Passwords exported successfully to " + filePath, "Export Success", JOptionPane.INFORMATION_MESSAGE);
             } else {
                 JOptionPane.showMessageDialog(frame, "Export cancelled.", "Export Cancelled", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+
+        /*
+         * Adds an action listener to the "Import Passwords" button.
+         * 
+         * When clicked:
+         * - It creates a JFileChooser to allow the user to select a file path for importing passwords.
+         * - If the user approves the selection (i.e., clicks "Open"):
+         *   - It retrieves the selected file path using getSelectedFile().getAbsolutePath().
+         *   - It calls the importFromFile() method of PasswordStore to load passwords from the specified file.
+         *   - Finally, it shows a success message indicating that passwords were imported successfully.
+         * 
+         * - If the user cancels the operation, it shows a message indicating that import was cancelled.
+         */
+        importButton.addActionListener(e -> {
+            JFileChooser fileChooser = new JFileChooser();
+            int userSelection = fileChooser.showOpenDialog(frame);
+            if (userSelection == fileChooser.APPROVE_OPTION) {
+                String filePath = fileChooser.getSelectedFile().getAbsolutePath();
+                passwordStore.importFromFile(filePath);
+                JOptionPane.showMessageDialog(frame, "Passwords imported successfully from " + filePath, "Import Success", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(frame, "Import cancelled.", "Import Cancelled", JOptionPane.INFORMATION_MESSAGE);
             }
         });
     }
