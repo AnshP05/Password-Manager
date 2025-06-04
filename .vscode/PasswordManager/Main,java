@@ -1,0 +1,6 @@
+public class Main {
+    public static void main(String[] args) {
+        // Create an instance of the PasswordManagerGUI class to start the 
+        PasswordManagerGUI passwordManager = new PasswordManagerGUI();
+    }
+}

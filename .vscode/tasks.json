@@ -1,0 +1,21 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build Password Manager",
+            "type": "shell",
+            "command": "mvn clean install",
+            "group": "build",
+            "problemMatcher": ["$javac"]
+        },
+        {
+            "label": "Run Password Manager",
+            "type": "shell",
+            "command": "mvn exec:java -Dexec.mainClass=\"com.passwordmanager.App\"",
+            "group": "test",
+            "problemMatcher": []
+        }
+    ]
+}
