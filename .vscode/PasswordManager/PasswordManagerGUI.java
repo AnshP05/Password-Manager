@@ -118,7 +118,8 @@ public class PasswordManagerGUI {
             }
             StringBuilder allPasswords = new StringBuilder("Stored Passwords:\n");
             for (Entry<String, String> entry : passwordStore.getAllEntries().entrySet()) {
-                allPasswords.append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
+                String decryptedPassword = passwordStore.decrypt(entry.getValue());
+                allPasswords.append(entry.getKey()).append(": ").append(decryptedPassword).append("\n");
             }
             JOptionPane.showMessageDialog(frame, allPasswords.toString(), "View Passwords", JOptionPane.INFORMATION_MESSAGE);
         });
@@ -166,11 +167,26 @@ public class PasswordManagerGUI {
          * - If the user cancels the operation, it shows a message indicating that export was cancelled.
          */
         exportButton.addActionListener(e -> {
+
+            Object[] options = {"Plain Text", "Encrypted"};
+            int choice = JOptionPane.showOptionDialog(frame, "Choose export format: ", "Export Format", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+
+            if(choice == JOptionPane.CLOSED_OPTION) {
+                JOptionPane.showMessageDialog(frame, "Export cancelled.", "Export Cancelled", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
             JFileChooser fileChooser = new JFileChooser();
             int userSelection = fileChooser.showSaveDialog(frame);
+
             if (userSelection == JFileChooser.APPROVE_OPTION) {
                 String filePath = fileChooser.getSelectedFile().getAbsolutePath();
-                passwordStore.exportToFile(filePath);
+                if(choice == 0) {
+                    passwordStore.exportToFilePlain(filePath);
+                } else {
+                    passwordStore.exportToFileEncrypted(filePath);
+                }
+
                 JOptionPane.showMessageDialog(frame, "Passwords exported successfully to " + filePath, "Export Success", JOptionPane.INFORMATION_MESSAGE);
             } else {
                 JOptionPane.showMessageDialog(frame, "Export cancelled.", "Export Cancelled", JOptionPane.INFORMATION_MESSAGE);
