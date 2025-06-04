@@ -3,6 +3,7 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import java.awt.FlowLayout;
+import java.util.Map.Entry;
 import java.awt.BorderLayout;
 
 public class PasswordManagerGUI {
@@ -51,7 +52,18 @@ public class PasswordManagerGUI {
             passwordStore.addEntry(key, password);
             System.out.println("Password added for key: " + key);
         });
-        System.out.println("Password Manager GUI initialized.");
+
+        viewButton.addActionListener(e -> {
+            // Code to view all passwords
+            if(passwordStore.getAllEntries().isEmpty()){
+                JOptionPane.showMessageDialog(frame, "No passwords stored yet.", "Info", JOptionPane.INFORMATION_MESSAGE);
+            }
+            StringBuilder allPasswords = new StringBuilder("Stored Passwords:\n");
+            for (Entry<String, String> entry : passwordStore.getAllEntries().entrySet()) {
+                allPasswords.append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
+            }
+            JOptionPane.showMessageDialog(frame, allPasswords.toString(), "View Passwords", JOptionPane.INFORMATION_MESSAGE);
+        });
     }
 
     // Main method to run the application
