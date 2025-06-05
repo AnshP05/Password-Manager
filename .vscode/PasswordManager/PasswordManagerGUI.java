@@ -1,5 +1,7 @@
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
@@ -7,7 +9,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
-import javax.swing.border.Border;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import java.awt.FlowLayout;
 import java.util.Map.Entry;
@@ -36,7 +39,7 @@ public class PasswordManagerGUI {
         */ 
         JFrame frame = new JFrame("Password Manager");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(600, 400);
+        frame.setSize(900, 200);
         frame.setLayout(new BorderLayout());
 
         /* 
@@ -46,6 +49,7 @@ public class PasswordManagerGUI {
         * Adding the button panel to the frame at the top (North) region
         * Setting the frame to be visible so that the user can interact with it
         */
+
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
         JButton addButton = new JButton("Add Password");
@@ -53,11 +57,13 @@ public class PasswordManagerGUI {
         JButton deleteButton = new JButton("Delete Password");
         JButton exportButton = new JButton("Export Passwords");
         JButton importButton = new JButton("Import Passwords");
+        JButton editPasswordsButton = new JButton("Edit Existing Passwords");
         buttonPanel.add(addButton);
         buttonPanel.add(viewButton);
         buttonPanel.add(deleteButton);
         buttonPanel.add(exportButton);
         buttonPanel.add(importButton);
+        buttonPanel.add(editPasswordsButton);
         frame.add(buttonPanel, BorderLayout.NORTH);
         frame.setVisible(true);
 
@@ -209,36 +215,6 @@ public class PasswordManagerGUI {
         });
 
         /*
-         * Adds an action listener to the "Delete Password" button.
-         * 
-         * When clicked:
-         * - Prompts the user to enter the key of the password they want to delete using JOptionPane.
-         *   - If the key is null (user canceled) or empty (user left it blank), it shows an error dialog and exits the listener early.
-         * 
-         * - It checks if the password store contains the specified key using containsKey().
-         *   - If not found, it shows an error dialog indicating that no password exists for that key.
-         * 
-         * - If the key is valid and exists in the store:
-         *   - It calls the deleteEntry() method of PasswordStore to remove the entry.
-         * 
-         * - Finally, it shows a confirmation message indicating that the password was deleted successfully.
-         */
-        deleteButton.addActionListener(e -> {
-            // Code to delete a password entry
-            String key = JOptionPane.showInputDialog(frame, "Enter key of password to delete:");
-            if (key == null || key.trim().isEmpty()) {
-                JOptionPane.showMessageDialog(frame, "Key cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            if(!passwordStore.getAllEntries().containsKey(key)) {
-                JOptionPane.showMessageDialog(frame, "No password found for the given key.", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            passwordStore.deleteEntry(key);
-            JOptionPane.showMessageDialog(frame, "Password deleted for: " + key, "Info", JOptionPane.INFORMATION_MESSAGE);
-        });
-
-        /*
          * Adds an action listener to the "Export Passwords" button.
          * 
          * When clicked:
@@ -298,6 +274,91 @@ public class PasswordManagerGUI {
                 JOptionPane.showMessageDialog(frame, "Passwords imported successfully from " + filePath, "Import Success", JOptionPane.INFORMATION_MESSAGE);
             } else {
                 JOptionPane.showMessageDialog(frame, "Import cancelled.", "Import Cancelled", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+
+        editPasswordsButton.addActionListener(e -> {
+
+            JTextField searchField = new JTextField(20);
+            DefaultListModel<String> listModel = new DefaultListModel<>();
+            JList<String> entryList = new JList<>(listModel);
+            JScrollPane scrollPane = new JScrollPane(entryList);
+            JButton editButton = new JButton("Edit Selected Password");
+
+            JPanel topPanel = new JPanel(new BorderLayout());
+            topPanel.add(new javax.swing.JLabel("Search: "), BorderLayout.WEST);
+            topPanel.add(searchField, BorderLayout.CENTER);
+
+            JPanel mainPanel = new JPanel(new BorderLayout());
+            mainPanel.add(topPanel, BorderLayout.NORTH);
+            mainPanel.add(scrollPane, BorderLayout.CENTER);
+            mainPanel.add(editButton, BorderLayout.SOUTH);
+
+            passwordStore.getAllEntries().keySet().forEach(listModel::addElement);   
+
+            searchField.getDocument().addDocumentListener(new DocumentListener() {
+                private void updateList(){
+                    String searchText = searchField.getText().trim().toLowerCase();
+                    listModel.clear();
+                    for (String key : passwordStore.getAllEntries().keySet()) {
+                        if (key.toLowerCase().contains(searchText)) {
+                            listModel.addElement(key);
+                        }
+                    }
+                }
+
+                public void insertUpdate(DocumentEvent e) {
+                    updateList();
+                }
+                public void removeUpdate(DocumentEvent e) {
+                    updateList();
+                }
+                public void changedUpdate(DocumentEvent e) {
+                    updateList();
+                }
+            });
+
+            if(passwordStore.getAllEntries().isEmpty()){
+                JOptionPane.showMessageDialog(frame, "No passwords stored yet.", "Info", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            int dialogResult = JOptionPane.showConfirmDialog(frame, mainPanel, "Edit Password", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+            if(dialogResult == JOptionPane.OK_OPTION && entryList.getSelectedValue() != null) {
+                String key = entryList.getSelectedValue();
+                String newPassword;
+
+                 while(true) {
+                JPasswordField passwordField = new JPasswordField(20);
+                JPasswordField passwordField2 = new JPasswordField(20);
+
+                JPanel passwordPanel = new JPanel(new java.awt.GridLayout(2, 2));
+                passwordPanel.add(new javax.swing.JLabel("Enter password:"));
+                passwordPanel.add(passwordField);
+                passwordPanel.add(new javax.swing.JLabel("Re-enter password:"));
+                passwordPanel.add(passwordField2);
+                int result = JOptionPane.showConfirmDialog(frame, passwordPanel, "Enter password for key: " + key, JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+                if (result != JOptionPane.OK_OPTION) {
+                    return;
+                }
+                newPassword = new String(passwordField.getPassword());
+                String password2 = new String(passwordField2.getPassword());
+                if(newPassword.trim().isEmpty()) {
+                    JOptionPane.showMessageDialog(frame, "Password cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+                if(!newPassword.equals(password2)) {
+                    JOptionPane.showMessageDialog(frame, "Passwords do not match. Please try again.", "Error", JOptionPane.ERROR_MESSAGE);
+                    continue;
+                } else if(!passwordStore.isPasswordStrong(newPassword)){
+                    JOptionPane.showMessageDialog(frame, "Password is not strong enough. It must be at least 8 characters long, contain uppercase and lowercase letters, numbers, and special characters.", "Error", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    break;
+                }
+            } 
+            passwordStore.addEntry(key, newPassword);
+            JOptionPane.showMessageDialog(frame, "Password updated for key: " + key, "Info", JOptionPane.INFORMATION_MESSAGE);
+
             }
         });
     }
