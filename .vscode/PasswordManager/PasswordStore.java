@@ -1,58 +1,86 @@
+// Import necessary Java classes for data structures, file I/O, encryption, and GUI dialogs
 import java.util.Map;
-
-import javax.swing.JOptionPane;
-
 import java.util.HashMap;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
+import javax.swing.JOptionPane;
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Base64;
 
 public class PasswordStore {
-    //intance variable
+    // Map to store password entries with keys (e.g., website names) and their corresponding encrypted passwords
     private Map<String, String> passwordMap;
 
+    // Constructor initializes the password map
     public PasswordStore() {
-        // Initialize the password map
         passwordMap = new HashMap<>();
     }
 
+    /**
+     * Adds a new password entry to the store.
+     * The password is encrypted before being stored.
+     *
+     * @param key      The identifier for the password (e.g., "Gmail").
+     * @param password The plaintext password to be stored.
+     */
     public void addEntry(String key, String password) {
-        if(password != null && !password.isEmpty() && isPasswordStrong(password)) {
-            String encryptedPassword = encrypt(password);
-            passwordMap.put(key, encryptedPassword); 
-        } 
+        String encryptedPassword = encrypt(password);
+        passwordMap.put(key, encryptedPassword);
     }
 
+    /**
+     * Checks if a given password is strong based on defined criteria:
+     * - Minimum length of 8 characters
+     * - At least one uppercase letter
+     * - At least one lowercase letter
+     * - At least one digit
+     * - At least one special character from the set !@#$%^&*()
+     *
+     * @param password The password to check.
+     * @return true if the password meets all criteria; false otherwise.
+     */
     public boolean isPasswordStrong(String password) {
-        if(password.length() < 8) return false;
-        if(!password.matches(".*[A-Z].*")) return false; // At least one uppercase letter
-        if(!password.matches(".*[a-z].*")) return false; // At least one lowercase letter
-        if(!password.matches(".*\\d.*")) return false;
-        if(!password.matches(".*[!@#$%^&*()].*")) return false; // At least one special character
+        if (password.length() < 8) return false;
+        if (!password.matches(".*[A-Z].*")) return false; // At least one uppercase letter
+        if (!password.matches(".*[a-z].*")) return false; // At least one lowercase letter
+        if (!password.matches(".*\\d.*")) return false;   // At least one digit
+        if (!password.matches(".*[!@#$%^&*()].*")) return false; // At least one special character
         return true;
     }
 
+    /**
+     * Retrieves all password entries.
+     *
+     * @return A map containing all key-encryptedPassword pairs.
+     */
     public Map<String, String> getAllEntries() {
-        // Return all entries in the password store
         return passwordMap;
     }
 
-    public void deleteEntry(String key){
-        if(passwordMap.containsKey(key)) {
-            // Remove the entry with the specified key
+    /**
+     * Deletes a password entry associated with the given key.
+     *
+     * @param key The key whose entry is to be deleted.
+     */
+    public void deleteEntry(String key) {
+        if (passwordMap.containsKey(key)) {
             passwordMap.remove(key);
-        } 
+        }
     }
 
+    /**
+     * Exports all password entries to a file in plaintext format.
+     * Each line in the file will have the format: key:password
+     *
+     * @param filePath The path to the file where passwords will be exported.
+     */
     public void exportToFilePlain(String filePath) {
-        // Code to export the password map to a file
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
-            for(Map.Entry<String, String> entry : passwordMap.entrySet()) {
+            for (Map.Entry<String, String> entry : passwordMap.entrySet()) {
                 String line = entry.getKey() + ":" + decrypt(entry.getValue());
                 writer.write(line);
                 writer.newLine();
@@ -61,11 +89,16 @@ public class PasswordStore {
             JOptionPane.showMessageDialog(null, "Error exporting passwords: " + e.getMessage(), "Export Error", JOptionPane.ERROR_MESSAGE);
         }
     }
-    
+
+    /**
+     * Exports all password entries to a file in encrypted format.
+     * Each line in the file will have the format: key:encryptedPassword
+     *
+     * @param filePath The path to the file where passwords will be exported.
+     */
     public void exportToFileEncrypted(String filePath) {
-        
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
-            for(Map.Entry<String, String> entry : passwordMap.entrySet()) {
+            for (Map.Entry<String, String> entry : passwordMap.entrySet()) {
                 String line = entry.getKey() + ":" + entry.getValue();
                 writer.write(line);
                 writer.newLine();
@@ -73,16 +106,22 @@ public class PasswordStore {
         } catch (IOException e) {
             JOptionPane.showMessageDialog(null, "Error exporting passwords: " + e.getMessage(), "Export Error", JOptionPane.ERROR_MESSAGE);
         }
-            
     }
 
+    /**
+     * Imports password entries from a file.
+     * Each line in the file should have the format: key:password
+     * The passwords are encrypted before being stored.
+     *
+     * @param filePath The path to the file from which passwords will be imported.
+     */
     public void importFromFile(String filePath) {
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
-            while((line = reader.readLine()) != null) {
-                if(!line.trim().isEmpty()) {
+            while ((line = reader.readLine()) != null) {
+                if (!line.trim().isEmpty()) {
                     String[] parts = line.split(":");
-                    if(parts.length == 2) {
+                    if (parts.length == 2) {
                         String key = parts[0].trim();
                         String password = parts[1].trim();
                         addEntry(key, password);
@@ -93,22 +132,17 @@ public class PasswordStore {
             JOptionPane.showMessageDialog(null, "Error importing passwords from file: " + e.getMessage(), "Import Error", JOptionPane.ERROR_MESSAGE);
         }
     }
-    /**
-    * Encrypts a plaintext string (e.g., a password) using AES encryption and returns the result as a Base64-encoded string.
-    *
-    * How it works:
-    * - A static 16-character secret key is defined, which is required for 128-bit AES encryption.
-    * - The key is converted into a SecretKeySpec, a format the Cipher class understands.
-    * - A Cipher instance is initialized in ENCRYPT_MODE with the AES algorithm.
-    * - The plaintext string is converted into bytes and then encrypted using the Cipher's doFinal method.
-    * - The resulting encrypted byte array is then encoded to a Base64 string so it can be safely stored as text.
-    *
-    * If an error occurs during encryption, a dialog box shows the error message and the method returns null.
-    */
 
+    /**
+     * Encrypts a plaintext password using AES encryption.
+     * The encrypted password is returned as a Base64-encoded string.
+     *
+     * @param plainText The plaintext password to encrypt.
+     * @return The encrypted password as a Base64-encoded string.
+     */
     public String encrypt(String plainText) {
         try {
-            String key = "1234567890123456"; // 16 char secret key
+            String key = "1234567890123456"; // 16-character secret key for AES
             SecretKeySpec secretKey = new SecretKeySpec(key.getBytes(), "AES");
 
             Cipher cipher = Cipher.getInstance("AES");
@@ -123,22 +157,14 @@ public class PasswordStore {
     }
 
     /**
-    * Decrypts a Base64-encoded, AES-encrypted string back into its original plaintext form.
-    *
-    * How it works:
-    * - Uses the same static 16-character secret key that was used for encryption.
-    * - Converts this key into a SecretKeySpec to be used with the Cipher.
-    * - A Cipher instance is initialized in DECRYPT_MODE with AES algorithm.
-    * - The encrypted Base64 string is first decoded back into a byte array.
-    * - The Cipher's doFinal method is used to decrypt the byte array into the original plaintext bytes.
-    * - The decrypted byte array is then converted back into a regular String.
-    *
-    * If any error occurs during decryption, a dialog box shows the error message and the method returns null.
-    */
-
+     * Decrypts a Base64-encoded, AES-encrypted password back to plaintext.
+     *
+     * @param encryptedText The encrypted password as a Base64-encoded string.
+     * @return The decrypted plaintext password.
+     */
     public String decrypt(String encryptedText) {
         try {
-            String key = "1234567890123456";
+            String key = "1234567890123456"; // Same 16-character secret key used for encryption
             SecretKeySpec secretKey = new SecretKeySpec(key.getBytes(), "AES");
 
             Cipher cipher = Cipher.getInstance("AES");
